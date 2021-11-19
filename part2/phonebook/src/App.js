@@ -46,13 +46,14 @@ const App = () => {
           })
           .catch((error) => {
             console.log(error);
-            showMessage(
-              `Information of ${newName} has already been removed from server`,
-              "warning"
-            );
-            setPersons(
-              persons.filter((person) => person.id !== personExist.id)
-            );
+            showMessage(error.response.data.error,"warning")
+            // showMessage(
+              // `Information of ${newName} has already been removed from server`,
+              // "warning"
+            // );
+            // setPersons(
+              // persons.filter((person) => person.id !== personExist.id)
+            // );
           });
       }
     } else {
@@ -65,6 +66,8 @@ const App = () => {
         setNewName("");
         setNewNumber("");
         showMessage(`Added ${returnedPerson.name}`, "success");
+      }).catch(error=>{
+        showMessage(error.response.data.error, "warning")
       });
     }
   };
