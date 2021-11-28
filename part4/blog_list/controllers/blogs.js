@@ -30,8 +30,9 @@ blogsRouter.post("/", middleware.userExtractor, async (request, response) => {
     user: user._id,
   });
 
-  const savedBlog = await blog.save();
+  let savedBlog = await blog.save();
 
+  savedBlog.populate("user", { username: 1, name: 1, id: 1 });
   // Also update blog property of the user model
   await user.updateOne({ blogs: [...user.blogs, savedBlog._id] }).exec();
 
@@ -43,22 +44,40 @@ blogsRouter.delete(
   middleware.userExtractor,
   async (request, response) => {
     const blogToDelete = await Blog.findById(request.params.id);
+    const user = request.user;
     if (blogToDelete.user.toString() !== request.user.id) {
       return response
         .status(401)
         .json({ error: "only user who added the blog can delete it" });
     }
     blogToDelete.remove();
+    await user
+      .updateOne({
+        blogs: user.blogs.filter(
+          (blog) => blog.toString() !== request.params.id
+        ),
+      })
+      .exec();
     response.status(204).end();
   }
 );
 
-blogsRouter.put("/:id", middleware.userExtractor, async (request, response) => {
+blogsRouter.post("/:id/comments", async (request, response) => {
   const body = request.body;
-  const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, body, {
+  const blogToUpdate = await Blog.findById(request.params.id);
+  blogToUpdate.comments.push(body.comment);
+  const blogUpdated = await blogToUpdate.save();
+  await blogUpdated.populate("user", { username: 1, name: 1, id: 1 });
+  response.json(blogUpdated.toJSON());
+});
+
+blogsRouter.put("/:id", async (request, response) => {
+  const body = request.body;
+  const blogUpdated = await Blog.findByIdAndUpdate(request.params.id, body, {
     new: true,
   });
-  response.json(updatedBlog.toJSON());
+  await blogUpdated.populate("user", { username: 1, name: 1, id: 1 });
+  response.json(blogUpdated.toJSON());
 });
 
 module.exports = blogsRouter;
