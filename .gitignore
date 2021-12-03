@@ -1,3 +1,13 @@
 node_modules
 template
 .env*
+.expo/
+dist/
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
